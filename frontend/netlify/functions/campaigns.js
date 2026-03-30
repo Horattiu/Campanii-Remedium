@@ -1,6 +1,5 @@
-import { getStore } from '@netlify/blobs'
+import { connectLambda, getStore } from '@netlify/blobs'
 
-const store = getStore('campaigns-store')
 const campaignsKey = 'campaigns-list'
 
 function jsonResponse(statusCode, payload) {
@@ -31,7 +30,7 @@ function normalizeCampaign(campaign) {
   }
 }
 
-async function readCampaignsFromStore() {
+async function readCampaignsFromStore(store) {
   const storedCampaigns = await store.get(campaignsKey, { type: 'json' })
   if (!Array.isArray(storedCampaigns)) {
     return []
@@ -42,8 +41,11 @@ async function readCampaignsFromStore() {
 
 export async function handler(event) {
   try {
+    connectLambda(event)
+    const store = getStore('campaigns-store')
+
     if (event.httpMethod === 'GET') {
-      const campaigns = await readCampaignsFromStore()
+      const campaigns = await readCampaignsFromStore(store)
       return jsonResponse(200, { campaigns })
     }
 
